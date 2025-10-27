@@ -37,6 +37,15 @@ app.use(morgan("dev"))
 // Serve static files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")))
 
+
+app.use(express.static(path.join(__dirname, 'build'))); // Change 'build' to your frontend folder if needed
+
+// Redirect all requests to the index.html file
+
+app.get("*", (req, res) => {
+  return  res.sendFile(path.join(__dirname, 'build', 'index.html'));
+});
+
 // API Routes with diagnostics
 console.log("Registering API Routes...")
 
