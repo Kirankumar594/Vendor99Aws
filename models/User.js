@@ -1,5 +1,5 @@
 const mongoose = require("mongoose")
-const bcrypt = require("bcrypt")
+const bcryptjs = require("bcryptjs")
 
 const UserSchema = new mongoose.Schema({
   mobile: {
@@ -107,8 +107,8 @@ UserSchema.pre("save", async function (next) {
   if (this.isModified("password") && this.password) {
     try {
       // Hash password with cost of 10
-      const salt = await bcrypt.genSalt(10)
-      this.password = await bcrypt.hash(this.password, salt)
+      const salt = await bcryptjs.genSalt(10)
+      this.password = await bcryptjs.hash(this.password, salt)
     } catch (error) {
       return next(error)
     }
@@ -125,7 +125,7 @@ UserSchema.methods.matchPassword = async function (enteredPassword) {
   if (!this.password) {
     return false // User might not have a password set (OTP-based auth)
   }
-  return await bcrypt.compare(enteredPassword, this.password)
+  return await bcryptjs.compare(enteredPassword, this.password)
 }
 
 module.exports = mongoose.model("User", UserSchema)

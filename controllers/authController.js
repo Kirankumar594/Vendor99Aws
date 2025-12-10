@@ -1,5 +1,5 @@
 const jwt = require("jsonwebtoken")
-const bcrypt = require("bcrypt")
+const bcryptjs = require("bcryptjs")
 const Admin = require("../models/Admin")
 const User = require("../models/User")
 

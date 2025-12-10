@@ -293,13 +293,27 @@ const getAvailableLeadsForUser = async (req, res) => {
       return res.status(400).json({ message: "Please complete your profile to view leads." })
     }
 
-    // Filter leads by user's category and city, and status 'Active'
-    const leads = await Lead.find({
-      category: user.category,
-      location: user.city, // Added filter by user's registered city
-      status: "Active",
+    // Filter leads by user's category and city (case-insensitive), and status 'Active'
+    const categoryFilter = { $regex: `^${user.category.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" }
+    const cityFilter = { $regex: `^${user.city.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}$`, $options: "i" }
+
+    const activeOrUnsetStatus = { $or: [{ status: { $regex: "^active$", $options: "i" } }, { status: { $exists: false } }] }
+
+    let leads = await Lead.find({
+      category: categoryFilter,
+      location: cityFilter, // match city case-insensitively
       purchasedCount: { $lt: MAX_PURCHASES_PER_LEAD },
+      ...activeOrUnsetStatus,
     }).sort({ uploadDate: -1 }) // Sort by upload date, newest first
+
+    // Fallback: if no leads match exact city string, show category-only matches
+    if (leads.length === 0) {
+      leads = await Lead.find({
+        category: categoryFilter,
+        purchasedCount: { $lt: MAX_PURCHASES_PER_LEAD },
+        ...activeOrUnsetStatus,
+      }).sort({ uploadDate: -1 })
+    }
 
     // Convert user's purchasedLead ObjectIds to strings for easy comparison
     const userPurchasedLeadIds = user.purchasedLeads.map((id) => id.toString())
